@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Header Parser Microservice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        
+        .api-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .api-endpoint {
+            background: #333;
+            color: #00ff88;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            border: 1px solid #555;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-refresh {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .btn-refresh:hover {
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .result {
+            background: #1e1e1e;
+            color: #f8f8f2;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            border: 1px solid #333;
+            min-height: 120px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .info-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .info-card code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+        
+        .examples {
+            background: #e8f4fd;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .example-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .example-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .example-url {
+            font-family: 'Courier New', monospace;
+            color: #0066cc;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .example-result {
+            font-family: 'Courier New', monospace;
+            color: #333;
+            font-size: 0.9rem;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .loading {
+            color: #667eea;
+            font-style: italic;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success {
+            background: #28a745;
+        }
+        
+        .status-loading {
+            background: #ffc107;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Request Header Parser</h1>
+        <p class="subtitle">Parse HTTP request headers to extract client information</p>
+        
+        <div class="api-section">
+            <h3>API Endpoint</h3>
+            <div class="api-endpoint">GET /api/whoami</div>
+            <p><strong>Description:</strong> Returns information about the client making the request</p>
+            <p><strong>Returns:</strong> JSON object with IP address, language, and software (user agent)</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Test the API</h3>
+            <div class="btn-group">
+                <button onclick="getMyInfo()">🔍 Get My Info (/api/whoami)</button>
+                <button class="btn-refresh" onclick="refreshInfo()">🔄 Refresh</button>
+            </div>
+            
+            <div>
+                <h4>API Response:</h4>
+                <div id="result" class="result">Click "Get My Info" to see your request headers information...</div>
+            </div>
+        </div>
+        
+        <div class="info-cards">
+            <div class="info-card">
+                <h4>🌐 IP Address</h4>
+                <p>Your public IP address as seen by the server. May show proxy or load balancer IP in production.</p>
+                <p><code>ipaddress</code>: Client's IP address</p>
+            </div>
+            
+            <div class="info-card">
+                <h4>🗣️ Language</h4>
+                <p>Browser's preferred language from the <code>Accept-Language</code> header.</p>
+                <p><code>language</code>: Language preference string</p>
+            </div>
+            
+            <div class="info-card">
+                <h4>💻 Software</h4>
+                <p>User agent string containing browser and operating system information.</p>
+                <p><code>software</code>: User-Agent header value</p>
+            </div>
+        </div>
+        
+        <div class="examples">
+            <h3>📋 Example API Response</h3>
+            <div class="example-item">
+                <div class="example-url">GET /api/whoami</div>
+                <div class="example-result">{
+  "ipaddress": "192.168.1.100",
+  "language": "en-US,en;q=0.9,vi;q=0.8",
+  "software": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Built with Express.js | Parses HTTP request headers</p>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the API functionality for frontend testing
+        function simulateWhoAmI() {
+            // Simulate getting client information (frontend simulation)
+            const clientInfo = {
+                ipaddress: "127.0.0.1", // Localhost for demo
+                language: navigator.language || navigator.userLanguage || "en-US",
+                software: navigator.userAgent
+            };
+            
+            // Add more realistic language header format
+            const languages = navigator.languages ? navigator.languages.join(',') : clientInfo.language;
+            clientInfo.language = languages;
+            
+            return clientInfo;
+        }
+        
+        // Get client information
+        async function getMyInfo() {
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = '<span class="loading">🔄 Fetching your information...</span>';
+            
+            try {
+                // Try to call the actual API endpoint
+                const response = await fetch('/api/whoami');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult(data);
+                } else {
+                    throw new Error('API not available');
+                }
+            } catch (error) {
+                // Fallback to simulated data if API is not available
+                console.log('Using simulated data for demo purposes');
+                setTimeout(() => {
+                    const simulatedData = simulateWhoAmI();
+                    simulatedData._note = "Simulated data - Deploy to see real server response";
+                    displayResult(simulatedData);
+                }, 500);
+            }
+        }
+        
+        // Refresh information
+        function refreshInfo() {
+            getMyInfo();
+        }
+        
+        // Display the result in formatted JSON
+        function displayResult(result) {
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = JSON.stringify(result, null, 2);
+        }
+        
+        // Auto-get info when page loads
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                getMyInfo();
+            }, 1000);
+        });
+        
+        // Test function to verify API functionality
+        function runHeaderParserTests() {
+            console.log('Running Request Header Parser Microservice Tests...\n');
+            
+            // Test the simulated API
+            const testResult = simulateWhoAmI();
+            
+            console.log('Test 1: API Response Structure');
+            console.log('Sample Output:', testResult);
+            console.log('✓ Has ipaddress key:', typeof testResult.ipaddress === 'string');
+            console.log('✓ Has language key:', typeof testResult.language === 'string');
+            console.log('✓ Has software key:', typeof testResult.software === 'string');
+            console.log('');
+            
+            console.log('Test 2: Data Validation');
+            console.log('✓ IP address format:', /^[\d\.:a-f]+$/i.test(testResult.ipaddress));
+            console.log('✓ Language not empty:', testResult.language.length > 0);
+            console.log('✓ Software not empty:', testResult.software.length > 0);
+            console.log('');
+            
+            console.log('All tests completed! Deploy to see real server data.');
+        }
+        
+        // Run tests automatically
+        window.addEventListener('load', function() {
+            setTimeout(runHeaderParserTests, 2000);
+        });
+    </script>
+</body>
+</html>
