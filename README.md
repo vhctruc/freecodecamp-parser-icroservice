@@ -185,6 +185,9 @@ curl -H "X-Forwarded-For: 192.168.1.100" \
 
 ## 📝 Author
 
+**trucvhc** - Data Engineer
+- GitHub: [@trucvhc](https://github.com/trucvhc)
+
 Created for FreeCodeCamp Back End Development and APIs Certification
 
 ## 📄 License
